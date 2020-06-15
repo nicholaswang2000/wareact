@@ -5,11 +5,16 @@ class App extends Component {
   state = {
     isLoaded: false,
     deckId: 0,
+    hasStarted: false,
+    reshuffled: false,
     playerRemaining: 26,
     cpuRemaining: 26,
+    inWar: false,
+    winnerOfRound: null,
     playerCard: { image: null },
     cpuCard: { image: null },
-    cardsToAdd: null,
+    cardsToAdd: "",
+    cardsInDiscard: 0,
     gameOver: false,
     winner: null,
   };
@@ -44,7 +49,7 @@ class App extends Component {
       "https://deckofcardsapi.com/api/deck/" +
       this.state.deckId +
       "/pile/cpu/shuffle/";
-
+    this.setState({ isLoaded: false });
     fetch(player_api)
       .then((res) => res.json())
       .then(
@@ -53,7 +58,7 @@ class App extends Component {
             .then((res) => res.json())
             .then(
               (result) => {
-                console.log(result);
+                this.setState({ isLoaded: true, reshuffled: true });
               },
               (error) => {
                 this.setState({
@@ -74,14 +79,15 @@ class App extends Component {
 
   reset = () => {};
 
-  addLoserPile = (str) => {
+  addLoserPile = (loser, winner) => {
     const player_api =
       "https://deckofcardsapi.com/api/deck/" +
       this.state.deckId +
       "/pile/" +
-      str +
+      loser +
       "/add/?cards=" +
       this.state.cardsToAdd;
+    console.log(this.state.cardsToAdd);
 
     fetch(player_api)
       .then((res) => res.json())
@@ -90,6 +96,9 @@ class App extends Component {
           this.setState({
             playerRemaining: result.piles.player.remaining,
             cpuRemaining: result.piles.cpu.remaining,
+            winnerOfRound: winner,
+            cardsToAdd: "",
+            inWar: false,
           });
           if (this.state.playerRemaining === 0) {
             this.setState({
@@ -112,20 +121,83 @@ class App extends Component {
       );
   };
 
+  addWarPile = () => {
+    this.reshuffle();
+    var cardCodes = "";
+    if (this.state.playerRemaining >= 3) {
+      fetch(
+        "https://deckofcardsapi.com/api/deck/" +
+          this.state.deckId +
+          "/pile/player/draw/?count=3"
+      )
+        .then((res) => res.json())
+        .then(
+          (result) => {
+            const codes = result.cards.map((code) => code.code);
+            for (var i = 0; i < codes.length; i++) {
+              cardCodes += codes[i] + ",";
+            }
+            fetch(
+              "https://deckofcardsapi.com/api/deck/" +
+                this.state.deckId +
+                "/pile/cpu/draw/?count=3"
+            )
+              .then((res) => res.json())
+              .then(
+                (result) => {
+                  const codes = result.cards.map((code) => code.code);
+                  for (var i = 0; i < codes.length; i++) {
+                    cardCodes += codes[i] + ",";
+                  }
+                  cardCodes += this.state.cardsToAdd;
+                  const cardsInDiscard = this.state.cardsInDiscard + 6;
+                  this.setState({
+                    cardsToAdd: cardCodes,
+                    cardsInDiscard,
+                    inWar: true,
+                    winnerOfRound: "war",
+                  });
+                  console.log(this.state.cardsToAdd);
+                },
+                (error) => {
+                  this.setState({
+                    isLoaded: false,
+                    error,
+                  });
+                }
+              );
+          },
+          (error) => {
+            this.setState({
+              isLoaded: false,
+              error,
+            });
+          }
+        );
+    } else {
+    }
+    if (this.state.cpuRemaining >= 3) {
+    } else {
+    }
+  };
+
   checkValue = () => {
     const playerValue = this.state.playerCard.value;
     const cpuValue = this.state.cpuCard.value;
-    if (playerValue > cpuValue) {
-      this.addLoserPile("player");
-    } else if (playerValue < cpuValue) {
-      this.addLoserPile("cpu");
+    if (playerValue < cpuValue) {
+      this.addLoserPile("player", "cpu");
+    } else if (playerValue > cpuValue) {
+      this.addLoserPile("cpu", "player");
     } else {
-      console.log("WAR");
+      this.addWarPile();
     }
   };
 
   addToDiscardPile = (cardStr) => {
-    this.setState({ cardsToAdd: cardStr });
+    cardStr += ",";
+    cardStr += this.state.cardsToAdd;
+    const cardsInDiscard = this.state.cardsInDiscard + 2;
+    this.setState({ cardsToAdd: cardStr, cardsInDiscard });
   };
 
   flipCard = () => {
@@ -133,6 +205,7 @@ class App extends Component {
       "https://deckofcardsapi.com/api/deck/" +
       this.state.deckId +
       "/pile/player/draw/bottom/";
+    this.setState({ isLoaded: false, reshuffled: false, hasStarted: true });
 
     fetch(player_api)
       .then((res) => res.json())
@@ -225,8 +298,13 @@ class App extends Component {
           });
           const cardStr =
             this.state.playerCard.code + "," + this.state.cpuCard.code;
+
+          if (!this.state.inWar) {
+            this.setState({ cardsInDiscard: 0 });
+          }
           this.addToDiscardPile(cardStr);
           this.checkValue();
+          this.setState({ isLoaded: true });
         },
         (error) => {
           this.setState({
@@ -323,48 +401,98 @@ class App extends Component {
   render() {
     const {
       isLoaded,
+      hasStarted,
+      reshuffled,
       playerCard,
       playerRemaining,
       cpuCard,
       cpuRemaining,
+      winnerOfRound,
+      cardsInDiscard,
       gameOver,
       winner,
     } = this.state;
-    if (!isLoaded) {
-      return (
-        <div className="spinner-border" role="status">
-          <span className="sr-only">Loading...</span>
-        </div>
-      );
-    }
+    // if (!isLoaded) {
+    //   return (
+    //     <div className="spinner-border" role="status">
+    //       <span className="sr-only">Loading...</span>
+    //     </div>
+    //   );
+    // }
     return (
       <div className="container">
         <div className="row">
           <div className="col">
             <h1>Player</h1>
-            <img
-              src={
-                playerCard.image ||
-                "https://lh3.googleusercontent.com/proxy/4kf6PbTTRAnXLxO6J4_yOd7ozCXY-1SZtBLsnrGYjI9YihW9jbGMetczrrt-eSWkSqDXCBuz854eKSRz05iDJzciurh_6J5g0unsYdmC16xTulwJ"
-              }
-              alt={playerCard.value + " of " + playerCard.suit}
-              width="226"
-              height="314"
-            />
+            {(!reshuffled && (
+              <img
+                src={
+                  playerCard.image ||
+                  "https://lh3.googleusercontent.com/proxy/4kf6PbTTRAnXLxO6J4_yOd7ozCXY-1SZtBLsnrGYjI9YihW9jbGMetczrrt-eSWkSqDXCBuz854eKSRz05iDJzciurh_6J5g0unsYdmC16xTulwJ"
+                }
+                alt={playerCard.value + " of " + playerCard.suit}
+                width="226"
+                height="314"
+              />
+            )) ||
+              (reshuffled && (
+                <img
+                  src={
+                    "https://lh3.googleusercontent.com/proxy/4kf6PbTTRAnXLxO6J4_yOd7ozCXY-1SZtBLsnrGYjI9YihW9jbGMetczrrt-eSWkSqDXCBuz854eKSRz05iDJzciurh_6J5g0unsYdmC16xTulwJ"
+                  }
+                  alt={playerCard.value + " of " + playerCard.suit}
+                  width="226"
+                  height="314"
+                />
+              ))}
             <p>Remaining: {playerRemaining}</p>
+            {!isLoaded && <p style={{ color: "gray" }}>Resetting...</p>}
+            {isLoaded && winnerOfRound === "player" && (
+              <p style={{ color: "green" }}>-{cardsInDiscard / 2}</p>
+            )}
+            {isLoaded && winnerOfRound === "cpu" && (
+              <p style={{ color: "red" }}>+{cardsInDiscard / 2}</p>
+            )}
+            {isLoaded && winnerOfRound === "war" && (
+              <p style={{ color: "gray" }}>+0</p>
+            )}
+            {!hasStarted && isLoaded && <p style={{ color: "gray" }}>+0</p>}
           </div>
           <div className="col">
             <h1>CPU</h1>
-            <img
-              src={
-                cpuCard.image ||
-                "https://lh3.googleusercontent.com/proxy/4kf6PbTTRAnXLxO6J4_yOd7ozCXY-1SZtBLsnrGYjI9YihW9jbGMetczrrt-eSWkSqDXCBuz854eKSRz05iDJzciurh_6J5g0unsYdmC16xTulwJ"
-              }
-              alt={cpuCard.value + " of " + cpuCard.suit}
-              width="226"
-              height="314"
-            />
+            {(!reshuffled && (
+              <img
+                src={
+                  cpuCard.image ||
+                  "https://lh3.googleusercontent.com/proxy/4kf6PbTTRAnXLxO6J4_yOd7ozCXY-1SZtBLsnrGYjI9YihW9jbGMetczrrt-eSWkSqDXCBuz854eKSRz05iDJzciurh_6J5g0unsYdmC16xTulwJ"
+                }
+                alt={cpuCard.value + " of " + cpuCard.suit}
+                width="226"
+                height="314"
+              />
+            )) ||
+              (reshuffled && (
+                <img
+                  src={
+                    "https://lh3.googleusercontent.com/proxy/4kf6PbTTRAnXLxO6J4_yOd7ozCXY-1SZtBLsnrGYjI9YihW9jbGMetczrrt-eSWkSqDXCBuz854eKSRz05iDJzciurh_6J5g0unsYdmC16xTulwJ"
+                  }
+                  alt={playerCard.value + " of " + playerCard.suit}
+                  width="226"
+                  height="314"
+                />
+              ))}
             <p>Remaining: {cpuRemaining}</p>
+            {!isLoaded && <p style={{ color: "gray" }}>Resetting...</p>}
+            {isLoaded && winnerOfRound === "cpu" && (
+              <p style={{ color: "green" }}>-{cardsInDiscard / 2}</p>
+            )}
+            {isLoaded && winnerOfRound === "player" && (
+              <p style={{ color: "red" }}>+{cardsInDiscard / 2}</p>
+            )}
+            {isLoaded && winnerOfRound === "war" && (
+              <p style={{ color: "gray" }}>+0</p>
+            )}
+            {!hasStarted && isLoaded && <p style={{ color: "gray" }}>+0</p>}
           </div>
         </div>
         <div className="row">
@@ -372,7 +500,7 @@ class App extends Component {
             <button
               onClick={this.flipCard}
               className="btn btn-primary btn-lg"
-              disabled={gameOver}
+              disabled={!isLoaded || gameOver}
             >
               Flip
             </button>
@@ -381,7 +509,7 @@ class App extends Component {
             <button
               onClick={this.reshuffle}
               className="btn btn-primary btn-lg"
-              disabled={gameOver}
+              disabled={!isLoaded || gameOver || reshuffled}
             >
               Shuffle
             </button>
@@ -390,7 +518,7 @@ class App extends Component {
             <button
               onClick={this.reset}
               className="btn btn-danger btn-lg"
-              disabled={gameOver}
+              disabled={!isLoaded || gameOver}
             >
               Restart
             </button>
