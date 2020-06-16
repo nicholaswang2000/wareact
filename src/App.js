@@ -1,7 +1,9 @@
 import React, { Component } from "react";
-import Button from "react-bootstrap/Button";
 import FooterPage from "./components/footer";
 import ModalView from "./components/alert";
+import ButtonRow from "./components/buttonRow";
+import CardView from "./components/cardView";
+import Header from "./components/header";
 import "./App.css";
 
 class App extends Component {
@@ -550,154 +552,36 @@ class App extends Component {
       winnerOfRound,
       cardsInDiscard,
       gameOver,
-      winner,
       showModal,
       autoclick,
     } = this.state;
 
     return (
       <div className="container">
-        <div className="row">
-          <span className="col center">
-            <h1>WAR</h1>
-          </span>
-        </div>
-        <div className="row">
-          <div className="col center">
-            <h3>Player</h3>
-            {(!reshuffled && (
-              <img
-                src={
-                  playerCard.image ||
-                  "https://lh3.googleusercontent.com/proxy/4kf6PbTTRAnXLxO6J4_yOd7ozCXY-1SZtBLsnrGYjI9YihW9jbGMetczrrt-eSWkSqDXCBuz854eKSRz05iDJzciurh_6J5g0unsYdmC16xTulwJ"
-                }
-                alt={playerCard.value + " of " + playerCard.suit}
-                width="226"
-                height="314"
-              />
-            )) ||
-              (reshuffled && (
-                <img
-                  src={
-                    "https://lh3.googleusercontent.com/proxy/4kf6PbTTRAnXLxO6J4_yOd7ozCXY-1SZtBLsnrGYjI9YihW9jbGMetczrrt-eSWkSqDXCBuz854eKSRz05iDJzciurh_6J5g0unsYdmC16xTulwJ"
-                  }
-                  alt={playerCard.value + " of " + playerCard.suit}
-                  width="226"
-                  height="314"
-                />
-              ))}
-            <div>
-              <span>Remaining: {playerRemaining}</span>
-              <br></br>
-              {!isLoaded && <span style={{ color: "gray" }}>Resetting...</span>}
-              {isLoaded && winnerOfRound === "player" && (
-                <span style={{ color: "green" }}>-{cardsInDiscard / 2}</span>
-              )}
-              {isLoaded && winnerOfRound === "cpu" && (
-                <span style={{ color: "red" }}>+{cardsInDiscard / 2}</span>
-              )}
-              {isLoaded && winnerOfRound === "war" && (
-                <span style={{ color: "gray" }}>+0</span>
-              )}
-              {!hasStarted && isLoaded && (
-                <span style={{ color: "gray" }}>+0</span>
-              )}
-            </div>
-          </div>
-          <div className="col center">
-            <h3>CPU</h3>
-            {(!reshuffled && (
-              <img
-                src={
-                  cpuCard.image ||
-                  "https://lh3.googleusercontent.com/proxy/4kf6PbTTRAnXLxO6J4_yOd7ozCXY-1SZtBLsnrGYjI9YihW9jbGMetczrrt-eSWkSqDXCBuz854eKSRz05iDJzciurh_6J5g0unsYdmC16xTulwJ"
-                }
-                alt={cpuCard.value + " of " + cpuCard.suit}
-                width="226"
-                height="314"
-              />
-            )) ||
-              (reshuffled && (
-                <img
-                  src={
-                    "https://lh3.googleusercontent.com/proxy/4kf6PbTTRAnXLxO6J4_yOd7ozCXY-1SZtBLsnrGYjI9YihW9jbGMetczrrt-eSWkSqDXCBuz854eKSRz05iDJzciurh_6J5g0unsYdmC16xTulwJ"
-                  }
-                  alt={playerCard.value + " of " + playerCard.suit}
-                  width="226"
-                  height="314"
-                />
-              ))}
-            <div>
-              <span>Remaining: {cpuRemaining}</span>
-              <br></br>
-              {!isLoaded && <span style={{ color: "gray" }}>Resetting...</span>}
-              {isLoaded && winnerOfRound === "cpu" && (
-                <span style={{ color: "green" }}>-{cardsInDiscard / 2}</span>
-              )}
-              {isLoaded && winnerOfRound === "player" && (
-                <span style={{ color: "red" }}>+{cardsInDiscard / 2}</span>
-              )}
-              {isLoaded && winnerOfRound === "war" && (
-                <span style={{ color: "gray" }}>+0</span>
-              )}
-              {!hasStarted && isLoaded && (
-                <span style={{ color: "gray" }}>+0</span>
-              )}
-            </div>
-          </div>
-        </div>
-        <div className="row">
-          <div className="col center">
-            <button
-              onClick={this.flipCard}
-              className="btn btn-primary btn-lg"
-              disabled={!isLoaded || gameOver}
-            >
-              Flip
-            </button>
-          </div>
-          <div className="col center">
-            {!autoclick && (
-              <Button
-                variant="primary btn-lg"
-                onClick={this.enableAutoclick}
-                disabled={!isLoaded || gameOver}
-              >
-                Enable Autoflip
-              </Button>
-            )}
-            {autoclick && (
-              <Button
-                variant="primary btn-lg"
-                onClick={this.disableAutoclick}
-                disabled={gameOver}
-              >
-                Disable Autoflip
-              </Button>
-            )}
-          </div>
-          <div className="col center">
-            <button
-              onClick={this.reshuffle}
-              className="btn btn-primary btn-lg"
-              disabled={!isLoaded || gameOver || reshuffled}
-            >
-              Shuffle
-            </button>
-          </div>
-        </div>
-        <div className="row">
-          <div className="col center">
-            <button
-              onClick={this.handleShow}
-              className="btn btn-danger btn-lg"
-              disabled={gameOver || !hasStarted}
-            >
-              Restart
-            </button>
-          </div>
-        </div>
-
+        <Header />
+        <CardView
+          reshuffled={reshuffled}
+          playerCard={playerCard}
+          playerRemaining={playerRemaining}
+          cpuCard={cpuCard}
+          cpuRemaining={cpuRemaining}
+          cardsInDiscard={cardsInDiscard}
+          winnerOfRound={winnerOfRound}
+          isLoaded={isLoaded}
+          hasStarted={hasStarted}
+        />
+        <ButtonRow
+          isLoaded={isLoaded}
+          gameOver={gameOver}
+          autoclick={autoclick}
+          reshuffled={reshuffled}
+          hasStarted={hasStarted}
+          flipCard={this.flipCard}
+          enableAutoclick={this.enableAutoclick}
+          disableAutoclick={this.disableAutoclick}
+          reshuffle={this.reshuffle}
+          handleShow={this.handleShow}
+        />
         <FooterPage />
         <ModalView
           showModal={showModal}
