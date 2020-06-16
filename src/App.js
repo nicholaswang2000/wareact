@@ -1,7 +1,7 @@
 import React, { Component } from "react";
-import Modal from "react-bootstrap/Modal";
-import Alert from "react-bootstrap/Alert";
 import Button from "react-bootstrap/Button";
+import FooterPage from "./components/footer";
+import ModalView from "./components/alert";
 import "./App.css";
 
 class App extends Component {
@@ -558,9 +558,9 @@ class App extends Component {
     return (
       <div className="container">
         <div className="row">
-          <div className="col center">
+          <span className="col center">
             <h1>WAR</h1>
-          </div>
+          </span>
         </div>
         <div className="row">
           <div className="col center">
@@ -586,18 +586,23 @@ class App extends Component {
                   height="314"
                 />
               ))}
-            <p>Remaining: {playerRemaining}</p>
-            {!isLoaded && <p style={{ color: "gray" }}>Resetting...</p>}
-            {isLoaded && winnerOfRound === "player" && (
-              <p style={{ color: "green" }}>-{cardsInDiscard / 2}</p>
-            )}
-            {isLoaded && winnerOfRound === "cpu" && (
-              <p style={{ color: "red" }}>+{cardsInDiscard / 2}</p>
-            )}
-            {isLoaded && winnerOfRound === "war" && (
-              <p style={{ color: "gray" }}>+0</p>
-            )}
-            {!hasStarted && isLoaded && <p style={{ color: "gray" }}>+0</p>}
+            <div>
+              <span>Remaining: {playerRemaining}</span>
+              <br></br>
+              {!isLoaded && <span style={{ color: "gray" }}>Resetting...</span>}
+              {isLoaded && winnerOfRound === "player" && (
+                <span style={{ color: "green" }}>-{cardsInDiscard / 2}</span>
+              )}
+              {isLoaded && winnerOfRound === "cpu" && (
+                <span style={{ color: "red" }}>+{cardsInDiscard / 2}</span>
+              )}
+              {isLoaded && winnerOfRound === "war" && (
+                <span style={{ color: "gray" }}>+0</span>
+              )}
+              {!hasStarted && isLoaded && (
+                <span style={{ color: "gray" }}>+0</span>
+              )}
+            </div>
           </div>
           <div className="col center">
             <h3>CPU</h3>
@@ -622,18 +627,23 @@ class App extends Component {
                   height="314"
                 />
               ))}
-            <p>Remaining: {cpuRemaining}</p>
-            {!isLoaded && <p style={{ color: "gray" }}>Resetting...</p>}
-            {isLoaded && winnerOfRound === "cpu" && (
-              <p style={{ color: "green" }}>-{cardsInDiscard / 2}</p>
-            )}
-            {isLoaded && winnerOfRound === "player" && (
-              <p style={{ color: "red" }}>+{cardsInDiscard / 2}</p>
-            )}
-            {isLoaded && winnerOfRound === "war" && (
-              <p style={{ color: "gray" }}>+0</p>
-            )}
-            {!hasStarted && isLoaded && <p style={{ color: "gray" }}>+0</p>}
+            <div>
+              <span>Remaining: {cpuRemaining}</span>
+              <br></br>
+              {!isLoaded && <span style={{ color: "gray" }}>Resetting...</span>}
+              {isLoaded && winnerOfRound === "cpu" && (
+                <span style={{ color: "green" }}>-{cardsInDiscard / 2}</span>
+              )}
+              {isLoaded && winnerOfRound === "player" && (
+                <span style={{ color: "red" }}>+{cardsInDiscard / 2}</span>
+              )}
+              {isLoaded && winnerOfRound === "war" && (
+                <span style={{ color: "gray" }}>+0</span>
+              )}
+              {!hasStarted && isLoaded && (
+                <span style={{ color: "gray" }}>+0</span>
+              )}
+            </div>
           </div>
         </div>
         <div className="row">
@@ -647,6 +657,26 @@ class App extends Component {
             </button>
           </div>
           <div className="col center">
+            {!autoclick && (
+              <Button
+                variant="primary btn-lg"
+                onClick={this.enableAutoclick}
+                disabled={!isLoaded || gameOver}
+              >
+                Enable Autoflip
+              </Button>
+            )}
+            {autoclick && (
+              <Button
+                variant="primary btn-lg"
+                onClick={this.disableAutoclick}
+                disabled={gameOver}
+              >
+                Disable Autoflip
+              </Button>
+            )}
+          </div>
+          <div className="col center">
             <button
               onClick={this.reshuffle}
               className="btn btn-primary btn-lg"
@@ -655,47 +685,26 @@ class App extends Component {
               Shuffle
             </button>
           </div>
+        </div>
+        <div className="row">
           <div className="col center">
             <button
               onClick={this.handleShow}
               className="btn btn-danger btn-lg"
-              disabled={!isLoaded || gameOver || !hasStarted}
+              disabled={gameOver || !hasStarted}
             >
               Restart
             </button>
           </div>
         </div>
-        <div className="row">
-          <div className="col center">
-            {!autoclick && (
-              <Button variant="warning btn-lg" onClick={this.enableAutoclick}>
-                Enable Autoflip
-              </Button>
-            )}
-            {autoclick && (
-              <Button variant="warning btn-lg" onClick={this.disableAutoclick}>
-                Disable Autoflip
-              </Button>
-            )}
-          </div>
-        </div>
 
-        <Modal show={showModal} onHide={this.handleShow}>
-          <Modal.Header>
-            <Modal.Title>Warning</Modal.Title>
-          </Modal.Header>
-          <Modal.Body>
-            Are you sure you want to reset the game? You will lose all progress!
-          </Modal.Body>
-          <Modal.Footer>
-            <Button variant="primary" onClick={this.handleClose}>
-              Close
-            </Button>
-            <Button variant="danger" onClick={this.reset}>
-              Reset
-            </Button>
-          </Modal.Footer>
-        </Modal>
+        <FooterPage />
+        <ModalView
+          showModal={showModal}
+          handleClose={this.handleClose}
+          handleShow={this.handleShow}
+          reset={this.reset}
+        />
       </div>
     );
   }
