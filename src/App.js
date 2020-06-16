@@ -1,4 +1,7 @@
 import React, { Component } from "react";
+import Modal from "react-bootstrap/Modal";
+import Alert from "react-bootstrap/Alert";
+import Button from "react-bootstrap/Button";
 import "./App.css";
 
 class App extends Component {
@@ -17,6 +20,8 @@ class App extends Component {
     cardsInDiscard: 0,
     gameOver: false,
     winner: null,
+    showModal: false,
+    clicks: 0,
   };
 
   componentDidMount() {
@@ -28,6 +33,20 @@ class App extends Component {
           this.setState({
             deckId: deck_id,
             shuffled: shuffled,
+            hasStarted: false,
+            reshuffled: false,
+            playerRemaining: 26,
+            cpuRemaining: 26,
+            inWar: false,
+            winnerOfRound: null,
+            playerCard: { image: null },
+            cpuCard: { image: null },
+            cardsToAdd: "",
+            cardsInDiscard: 0,
+            gameOver: false,
+            winner: null,
+            showModal: false,
+            clicks: 0,
           });
           this.splitPiles();
         },
@@ -61,23 +80,19 @@ class App extends Component {
                 this.setState({ isLoaded: true, reshuffled: true });
               },
               (error) => {
-                this.setState({
-                  isLoaded: false,
-                  error,
-                });
+                this.finishGame();
               }
             );
         },
         (error) => {
-          this.setState({
-            isLoaded: false,
-            error,
-          });
+          this.finishGame();
         }
       );
   };
 
-  reset = () => {};
+  reset = () => {
+    this.componentDidMount();
+  };
 
   addLoserPile = (loser, winner) => {
     const player_api =
@@ -87,7 +102,6 @@ class App extends Component {
       loser +
       "/add/?cards=" +
       this.state.cardsToAdd;
-    console.log(this.state.cardsToAdd);
 
     fetch(player_api)
       .then((res) => res.json())
@@ -113,16 +127,12 @@ class App extends Component {
           }
         },
         (error) => {
-          this.setState({
-            isLoaded: false,
-            error,
-          });
+          this.finishGame();
         }
       );
   };
 
   addWarPile = () => {
-    this.reshuffle();
     var cardCodes = "";
     if (this.state.playerRemaining >= 3) {
       fetch(
@@ -137,35 +147,66 @@ class App extends Component {
             for (var i = 0; i < codes.length; i++) {
               cardCodes += codes[i] + ",";
             }
-            fetch(
-              "https://deckofcardsapi.com/api/deck/" +
-                this.state.deckId +
-                "/pile/cpu/draw/?count=3"
-            )
-              .then((res) => res.json())
-              .then(
-                (result) => {
-                  const codes = result.cards.map((code) => code.code);
-                  for (var i = 0; i < codes.length; i++) {
-                    cardCodes += codes[i] + ",";
+            if (this.state.cpuRemaining >= 3) {
+              fetch(
+                "https://deckofcardsapi.com/api/deck/" +
+                  this.state.deckId +
+                  "/pile/cpu/draw/?count=3"
+              )
+                .then((res) => res.json())
+                .then(
+                  (result) => {
+                    const codes = result.cards.map((code) => code.code);
+                    for (var i = 0; i < codes.length; i++) {
+                      cardCodes += codes[i] + ",";
+                    }
+                    cardCodes += this.state.cardsToAdd;
+                    const cardsInDiscard = this.state.cardsInDiscard + 6;
+                    this.setState({
+                      cardsToAdd: cardCodes,
+                      cardsInDiscard,
+                      inWar: true,
+                      winnerOfRound: "war",
+                    });
+                  },
+                  (error) => {
+                    this.setState({
+                      isLoaded: false,
+                      error,
+                    });
                   }
-                  cardCodes += this.state.cardsToAdd;
-                  const cardsInDiscard = this.state.cardsInDiscard + 6;
-                  this.setState({
-                    cardsToAdd: cardCodes,
-                    cardsInDiscard,
-                    inWar: true,
-                    winnerOfRound: "war",
-                  });
-                  console.log(this.state.cardsToAdd);
-                },
-                (error) => {
-                  this.setState({
-                    isLoaded: false,
-                    error,
-                  });
-                }
-              );
+                );
+            } else {
+              fetch(
+                "https://deckofcardsapi.com/api/deck/" +
+                  this.state.deckId +
+                  "/pile/cpu/draw/?count=" +
+                  this.state.cpuRemaining.toString(10)
+              )
+                .then((res) => res.json())
+                .then(
+                  (result) => {
+                    const codes = result.cards.map((code) => code.code);
+                    for (var i = 0; i < codes.length; i++) {
+                      cardCodes += codes[i] + ",";
+                    }
+                    cardCodes += this.state.cardsToAdd;
+                    const cardsInDiscard = this.state.cardsInDiscard + 6;
+                    this.setState({
+                      cardsToAdd: cardCodes,
+                      cardsInDiscard,
+                      inWar: true,
+                      winnerOfRound: "war",
+                    });
+                  },
+                  (error) => {
+                    this.setState({
+                      isLoaded: false,
+                      error,
+                    });
+                  }
+                );
+            }
           },
           (error) => {
             this.setState({
@@ -175,9 +216,87 @@ class App extends Component {
           }
         );
     } else {
-    }
-    if (this.state.cpuRemaining >= 3) {
-    } else {
+      fetch(
+        "https://deckofcardsapi.com/api/deck/" +
+          this.state.deckId +
+          "/pile/player/draw/?count=" +
+          this.state.playerRemaining.toString(10)
+      )
+        .then((res) => res.json())
+        .then(
+          (result) => {
+            const codes = result.cards.map((code) => code.code);
+            for (var i = 0; i < codes.length; i++) {
+              cardCodes += codes[i] + ",";
+            }
+            if (this.state.cpuRemaining >= 3) {
+              fetch(
+                "https://deckofcardsapi.com/api/deck/" +
+                  this.state.deckId +
+                  "/pile/cpu/draw/?count=3"
+              )
+                .then((res) => res.json())
+                .then(
+                  (result) => {
+                    const codes = result.cards.map((code) => code.code);
+                    for (var i = 0; i < codes.length; i++) {
+                      cardCodes += codes[i] + ",";
+                    }
+                    cardCodes += this.state.cardsToAdd;
+                    const cardsInDiscard = this.state.cardsInDiscard + 6;
+                    this.setState({
+                      cardsToAdd: cardCodes,
+                      cardsInDiscard,
+                      inWar: true,
+                      winnerOfRound: "war",
+                    });
+                  },
+                  (error) => {
+                    this.setState({
+                      isLoaded: false,
+                      error,
+                    });
+                  }
+                );
+            } else {
+              fetch(
+                "https://deckofcardsapi.com/api/deck/" +
+                  this.state.deckId +
+                  "/pile/cpu/draw/?count=" +
+                  this.state.cpuRemaining.toString(10)
+              )
+                .then((res) => res.json())
+                .then(
+                  (result) => {
+                    const codes = result.cards.map((code) => code.code);
+                    for (var i = 0; i < codes.length; i++) {
+                      cardCodes += codes[i] + ",";
+                    }
+                    cardCodes += this.state.cardsToAdd;
+                    const cardsInDiscard = this.state.cardsInDiscard + 6;
+                    this.setState({
+                      cardsToAdd: cardCodes,
+                      cardsInDiscard,
+                      inWar: true,
+                      winnerOfRound: "war",
+                    });
+                  },
+                  (error) => {
+                    this.setState({
+                      isLoaded: false,
+                      error,
+                    });
+                  }
+                );
+            }
+          },
+          (error) => {
+            this.setState({
+              isLoaded: false,
+              error,
+            });
+          }
+        );
     }
   };
 
@@ -205,16 +324,19 @@ class App extends Component {
       "https://deckofcardsapi.com/api/deck/" +
       this.state.deckId +
       "/pile/player/draw/bottom/";
-    this.setState({ isLoaded: false, reshuffled: false, hasStarted: true });
+    const clicks = this.state.clicks + 1;
+    this.setState({
+      isLoaded: false,
+      reshuffled: false,
+      hasStarted: true,
+      clicks,
+    });
 
     fetch(player_api)
       .then((res) => res.json())
       .then(
         (result) => {
-          this.setState({
-            playerCard: result.cards[0],
-          });
-          this.cpuFlip();
+          this.cpuFlip(result.cards[0]);
         },
         (error) => {
           this.setState({
@@ -225,7 +347,7 @@ class App extends Component {
       );
   };
 
-  cpuFlip = () => {
+  cpuFlip = (playerCard) => {
     const cpu_api =
       "https://deckofcardsapi.com/api/deck/" +
       this.state.deckId +
@@ -235,6 +357,7 @@ class App extends Component {
       .then(
         (result) => {
           this.setState({
+            playerCard,
             cpuCard: result.cards[0],
           });
           if (this.state.playerCard.value === "JACK") {
@@ -307,10 +430,7 @@ class App extends Component {
           this.setState({ isLoaded: true });
         },
         (error) => {
-          this.setState({
-            isLoaded: false,
-            error,
-          });
+          this.finishGame();
         }
       );
   };
@@ -327,10 +447,7 @@ class App extends Component {
           this.assignPlayerPiles(result.cards);
         },
         (error) => {
-          this.setState({
-            isLoaded: false,
-            error,
-          });
+          this.finishGame();
         }
       );
   };
@@ -368,10 +485,7 @@ class App extends Component {
           this.cpuPile(strC);
         },
         (error) => {
-          this.setState({
-            isLoaded: false,
-            error,
-          });
+          this.finishGame();
         }
       );
   };
@@ -390,13 +504,25 @@ class App extends Component {
           this.setState({ isLoaded: true });
         },
         (error) => {
-          this.setState({
-            isLoaded: false,
-            error,
-          });
+          this.finishGame();
         }
       );
   };
+
+  finishGame = () => {
+    const winner = "player"
+      ? this.state.playerRemaining < this.state.cpuRemaining
+      : "cpu";
+    this.setState({
+      playerRemaining: 0,
+      cpuRemaining: 0,
+      winner,
+      gameOver: true,
+    });
+  };
+
+  handleClose = () => this.setState({ showModal: false });
+  handleShow = () => this.setState({ showModal: true });
 
   render() {
     const {
@@ -411,6 +537,7 @@ class App extends Component {
       cardsInDiscard,
       gameOver,
       winner,
+      showModal,
     } = this.state;
     // if (!isLoaded) {
     //   return (
@@ -422,8 +549,13 @@ class App extends Component {
     return (
       <div className="container">
         <div className="row">
-          <div className="col">
-            <h1>Player</h1>
+          <div className="col center">
+            <h1>WAR</h1>
+          </div>
+        </div>
+        <div className="row">
+          <div className="col center">
+            <h3>Player</h3>
             {(!reshuffled && (
               <img
                 src={
@@ -458,8 +590,8 @@ class App extends Component {
             )}
             {!hasStarted && isLoaded && <p style={{ color: "gray" }}>+0</p>}
           </div>
-          <div className="col">
-            <h1>CPU</h1>
+          <div className="col center">
+            <h3>CPU</h3>
             {(!reshuffled && (
               <img
                 src={
@@ -496,7 +628,7 @@ class App extends Component {
           </div>
         </div>
         <div className="row">
-          <div className="col">
+          <div className="col center">
             <button
               onClick={this.flipCard}
               className="btn btn-primary btn-lg"
@@ -505,7 +637,7 @@ class App extends Component {
               Flip
             </button>
           </div>
-          <div className="col">
+          <div className="col center">
             <button
               onClick={this.reshuffle}
               className="btn btn-primary btn-lg"
@@ -514,16 +646,41 @@ class App extends Component {
               Shuffle
             </button>
           </div>
-          <div className="col">
+          <div className="col center">
             <button
-              onClick={this.reset}
+              onClick={this.handleShow}
               className="btn btn-danger btn-lg"
-              disabled={!isLoaded || gameOver}
+              disabled={!isLoaded || gameOver || !hasStarted}
             >
               Restart
             </button>
           </div>
         </div>
+
+        <Alert variant="success">
+          <p>If this is going too slowly, use the autoclick button!</p>
+          <hr />
+          <div className="d-flex justify-content-end">
+            <Button variant="outline-success">Autoclick</Button>
+          </div>
+        </Alert>
+
+        <Modal show={showModal} onHide={this.handleShow}>
+          <Modal.Header>
+            <Modal.Title>Warning</Modal.Title>
+          </Modal.Header>
+          <Modal.Body>
+            Are you sure you want to reset the game? You will lose all progress!
+          </Modal.Body>
+          <Modal.Footer>
+            <Button variant="primary" onClick={this.handleClose}>
+              Close
+            </Button>
+            <Button variant="danger" onClick={this.reset}>
+              Reset
+            </Button>
+          </Modal.Footer>
+        </Modal>
       </div>
     );
   }
