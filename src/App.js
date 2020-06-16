@@ -5,6 +5,8 @@ import Button from "react-bootstrap/Button";
 import "./App.css";
 
 class App extends Component {
+  counterId = 0;
+
   state = {
     isLoaded: false,
     deckId: 0,
@@ -22,6 +24,7 @@ class App extends Component {
     winner: null,
     showModal: false,
     clicks: 0,
+    autoclick: false,
   };
 
   componentDidMount() {
@@ -47,6 +50,7 @@ class App extends Component {
             winner: null,
             showModal: false,
             clicks: 0,
+            autoclick: false,
           });
           this.splitPiles();
         },
@@ -521,6 +525,16 @@ class App extends Component {
     });
   };
 
+  enableAutoclick = () => {
+    this.setState({ autoclick: true });
+    this.intervalId = setInterval(this.flipCard, 600);
+  };
+
+  disableAutoclick = (counter) => {
+    this.setState({ autoclick: false });
+    clearInterval(this.intervalId);
+  };
+
   handleClose = () => this.setState({ showModal: false });
   handleShow = () => this.setState({ showModal: true });
 
@@ -538,14 +552,9 @@ class App extends Component {
       gameOver,
       winner,
       showModal,
+      autoclick,
     } = this.state;
-    // if (!isLoaded) {
-    //   return (
-    //     <div className="spinner-border" role="status">
-    //       <span className="sr-only">Loading...</span>
-    //     </div>
-    //   );
-    // }
+
     return (
       <div className="container">
         <div className="row">
@@ -656,14 +665,20 @@ class App extends Component {
             </button>
           </div>
         </div>
-
-        <Alert variant="success">
-          <p>If this is going too slowly, use the autoclick button!</p>
-          <hr />
-          <div className="d-flex justify-content-end">
-            <Button variant="outline-success">Autoclick</Button>
+        <div className="row">
+          <div className="col center">
+            {!autoclick && (
+              <Button variant="warning btn-lg" onClick={this.enableAutoclick}>
+                Enable Autoflip
+              </Button>
+            )}
+            {autoclick && (
+              <Button variant="warning btn-lg" onClick={this.disableAutoclick}>
+                Disable Autoflip
+              </Button>
+            )}
           </div>
-        </Alert>
+        </div>
 
         <Modal show={showModal} onHide={this.handleShow}>
           <Modal.Header>
