@@ -11,16 +11,15 @@ const CardView = ({
   isLoaded,
   hasStarted,
 }) => {
+  let cardBack =
+    "https://vignette.wikia.nocookie.net/hearthstone/images/c/c4/Card_back-Default.png/revision/latest/scale-to-width-down/340?cb=20140823204025";
   return (
     <div className="row">
       <div className="col center">
         <h3>Player</h3>
         {(!reshuffled && (
           <img
-            src={
-              playerCard.image ||
-              "https://lh3.googleusercontent.com/proxy/4kf6PbTTRAnXLxO6J4_yOd7ozCXY-1SZtBLsnrGYjI9YihW9jbGMetczrrt-eSWkSqDXCBuz854eKSRz05iDJzciurh_6J5g0unsYdmC16xTulwJ"
-            }
+            src={playerCard.image || cardBack}
             alt={playerCard.value + " of " + playerCard.suit}
             width="226"
             height="314"
@@ -28,9 +27,7 @@ const CardView = ({
         )) ||
           (reshuffled && (
             <img
-              src={
-                "https://lh3.googleusercontent.com/proxy/4kf6PbTTRAnXLxO6J4_yOd7ozCXY-1SZtBLsnrGYjI9YihW9jbGMetczrrt-eSWkSqDXCBuz854eKSRz05iDJzciurh_6J5g0unsYdmC16xTulwJ"
-              }
+              src={cardBack}
               alt={playerCard.value + " of " + playerCard.suit}
               width="226"
               height="314"
@@ -56,10 +53,7 @@ const CardView = ({
         <h3>CPU</h3>
         {(!reshuffled && (
           <img
-            src={
-              cpuCard.image ||
-              "https://lh3.googleusercontent.com/proxy/4kf6PbTTRAnXLxO6J4_yOd7ozCXY-1SZtBLsnrGYjI9YihW9jbGMetczrrt-eSWkSqDXCBuz854eKSRz05iDJzciurh_6J5g0unsYdmC16xTulwJ"
-            }
+            src={cpuCard.image || cardBack}
             alt={cpuCard.value + " of " + cpuCard.suit}
             width="226"
             height="314"
@@ -67,9 +61,7 @@ const CardView = ({
         )) ||
           (reshuffled && (
             <img
-              src={
-                "https://lh3.googleusercontent.com/proxy/4kf6PbTTRAnXLxO6J4_yOd7ozCXY-1SZtBLsnrGYjI9YihW9jbGMetczrrt-eSWkSqDXCBuz854eKSRz05iDJzciurh_6J5g0unsYdmC16xTulwJ"
-              }
+              src={cardBack}
               alt={playerCard.value + " of " + playerCard.suit}
               width="226"
               height="314"
