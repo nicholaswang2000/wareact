@@ -30,6 +30,7 @@ class App extends Component {
   };
 
   componentDidMount() {
+    document.title = "War Game";
     fetch("https://deckofcardsapi.com/api/deck/new/shuffle/?deck_count=1")
       .then((res) => res.json())
       .then(

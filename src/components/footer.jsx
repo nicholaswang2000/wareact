@@ -9,6 +9,11 @@ const FooterPage = () => {
           &copy; {new Date().getFullYear()} Copyright:{" "}
           <a href="#"> Nicholas Wang </a>
         </MDBContainer>
+        <MDBContainer fluid>
+          <a href="https://github.com/nicholaswang2000/wareact" target="_blank">
+            Github repo
+          </a>
+        </MDBContainer>
         <MDBContainer fluid>pls hire me</MDBContainer>
       </div>
     </MDBFooter>
